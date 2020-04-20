@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 2.8.6)
 
 set(PYTHON_VERSION "3.7.6" CACHE STRING "The version of Python to build.")
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
+
 string(REPLACE "." ";" VERSION_LIST ${PYTHON_VERSION})
 list(GET VERSION_LIST 0 PY_VERSION_MAJOR)
 list(GET VERSION_LIST 1 PY_VERSION_MINOR)
@@ -156,129 +158,7 @@ else()
 endif()
 
 # Detect source directory
-set(_landmark "pyconfig.h.in") # CMake will look for this file.
-if(NOT (SRC_DIR AND EXISTS ${SRC_DIR}/${_landmark}))
-    foreach(dirname
-        ${CMAKE_CURRENT_SOURCE_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}/cpython-${PY_VERSION}
-        ${CMAKE_CURRENT_SOURCE_DIR}/Python-${PY_VERSION}
-        ${CMAKE_CURRENT_BINARY_DIR}/../cpython-${PY_VERSION}
-        ${CMAKE_CURRENT_BINARY_DIR}/../Python-${PY_VERSION})
-        set(SRC_DIR ${dirname})
-        if(EXISTS ${SRC_DIR}/${_landmark})
-            break()
-        endif()
-    endforeach()
-endif()
-get_filename_component(SRC_DIR "${SRC_DIR}" ABSOLUTE)
-
-# Download sources
-get_filename_component(_parent_dir ${CMAKE_CURRENT_BINARY_DIR} PATH)
-string(REGEX REPLACE "[a-z]+[1-9]$" "" _py_version_patch_no_rc ${PY_VERSION_PATCH})
-set(_py_version_no_rc "${PY_VERSION_MAJOR}.${PY_VERSION_MINOR}.${_py_version_patch_no_rc}")
-set(_download_link "https://www.python.org/ftp/python/${_py_version_no_rc}/Python-${PY_VERSION}.tgz")
-# Variable below represent the set of available python version.
-# 2.7.x
-set(_download_2.7.3_md5 "2cf641732ac23b18d139be077bd906cd")
-set(_download_2.7.4_md5 "592603cfaf4490a980e93ecb92bde44a")
-set(_download_2.7.5_md5 "b4f01a1d0ba0b46b05c73b2ac909b1df")
-set(_download_2.7.6_md5 "1d8728eb0dfcac72a0fd99c17ec7f386")
-set(_download_2.7.7_md5 "cf842800b67841d64e7fb3cd8acb5663")
-set(_download_2.7.8_md5 "d4bca0159acb0b44a781292b5231936f")
-set(_download_2.7.9_md5 "5eebcaa0030dc4061156d3429657fb83")
-set(_download_2.7.10_md5 "d7547558fd673bd9d38e2108c6b42521")
-set(_download_2.7.11_md5 "6b6076ec9e93f05dd63e47eb9c15728b")
-set(_download_2.7.12_md5 "88d61f82e3616a4be952828b3694109d")
-set(_download_2.7.13_md5 "17add4bf0ad0ec2f08e0cae6d205c700")
-set(_download_2.7.14_md5 "cee2e4b33ad3750da77b2e85f2f8b724")
-set(_download_2.7.15_md5 "045fb3440219a1f6923fefdabde63342")
-if (UNIX OR APPLE)
-    # 2.7.16 and 2.7.17 - patch problems on VS
-    set(_download_2.7.16_md5 "f1a2ace631068444831d01485466ece0")
-    set(_download_2.7.17_md5 "27a7919fa8d1364bae766949aaa91a5b")
-endif()
-# 3.5.x
-set(_download_3.5.1_md5 "be78e48cdfc1a7ad90efff146dce6cfe")
-set(_download_3.5.2_md5 "3fe8434643a78630c61c6464fe2e7e72")
-set(_download_3.5.3_md5 "6192f0e45f02575590760e68c621a488")
-set(_download_3.5.4_md5 "2ed4802b7a2a7e40d2e797272bf388ec")
-set(_download_3.5.5_md5 "7c825b747d25c11e669e99b912398585")
-set(_download_3.5.6_md5 "99a7e803633a627b264a42ce976d8c19")
-set(_download_3.5.7_md5 "92f4c16c55429bf986f5ab45fe3a6659")
-set(_download_3.5.8_md5 "c52ac1fc37e5daebb08069ea0e27d293")
-set(_download_3.5.9_md5 "5a58675043bde569d235f41dadeada42")
-# 3.6.x
-set(_download_3.6.0_md5 "3f7062ccf8be76491884d0e47ac8b251")
-set(_download_3.6.1_md5 "2d0fc9f3a5940707590e07f03ecb08b9")
-set(_download_3.6.2_md5 "e1a36bfffdd1d3a780b1825daf16e56c")
-set(_download_3.6.3_md5 "e9180c69ed9a878a4a8a3ab221e32fa9")
-set(_download_3.6.4_md5 "9de6494314ea199e3633211696735f65")
-set(_download_3.6.5_md5 "ab25d24b1f8cc4990ade979f6dc37883")
-set(_download_3.6.6_md5 "9a080a86e1a8d85e45eee4b1cd0a18a2")
-set(_download_3.6.7_md5 "c83551d83bf015134b4b2249213f3f85")
-set(_download_3.6.8_md5 "48f393a04c2e66c77bfc114e589ec630")
-set(_download_3.6.9_md5 "ff7cdaef4846c89c1ec0d7b709bbd54d")
-set(_download_3.6.10_md5 "df5f494ef9fbb03a0264d1e9d406aada")
-# 3.7.x
-if (WIN32)
-    # 3.7.0 needs patch for
-    # In file included from /home/appsmith/asv/ports/build-64/Python-3.7.0/Modules/_ssl.c:38:
-    # Python-3.7.0/Modules/socketmodule.h:206:24: error: field ‘vm’ has incomplete type
-    #   206 |     struct sockaddr_vm vm;
-    set(_download_3.7.0_md5 "41b6595deb4147a1ed517a7d9a580271")
-endif()
-set(_download_3.7.1_md5 "99f78ecbfc766ea449c4d9e7eda19e83")
-set(_download_3.7.2_md5 "02a75015f7cd845e27b85192bb0ca4cb")
-set(_download_3.7.3_md5 "2ee10f25e3d1b14215d56c3882486fcf")
-set(_download_3.7.4_md5 "68111671e5b2db4aef7b9ab01bf0f9be")
-set(_download_3.7.5_md5 "1cd071f78ff6d9c7524c95303a3057aa")
-set(_download_3.7.6_md5 "3ef90f064506dd85b4b4ab87a7a83d44")
-
-set(_extracted_dir "Python-${PY_VERSION}")
-
-if(NOT EXISTS ${SRC_DIR}/${_landmark} AND DOWNLOAD_SOURCES)
-    get_filename_component(_filename ${_download_link} NAME)
-    set(_archive_filepath ${CMAKE_CURRENT_BINARY_DIR}/../${_filename})
-    if(EXISTS "${_archive_filepath}")
-        message(STATUS "${_filename} already downloaded")
-    else()
-        message(STATUS "Downloading ${_download_link}")
-        if(NOT DEFINED _download_${PY_VERSION}_md5)
-            message(FATAL_ERROR "Selected PY_VERSION [${PY_VERSION}] is not associated with any checksum. Consider updating this CMakeLists.txt setting _download_${PY_VERSION}_md5 variable")
-        endif()
-        file(
-          DOWNLOAD ${_download_link} ${_archive_filepath}
-          EXPECTED_MD5 ${_download_${PY_VERSION}_md5}
-          SHOW_PROGRESS
-          )
-    endif()
-
-    message(STATUS "Extracting ${_filename}")
-    execute_process(COMMAND ${CMAKE_COMMAND} -E tar xfz ${_archive_filepath}
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
-        RESULT_VARIABLE rv)
-    if(NOT rv EQUAL 0)
-        message(FATAL_ERROR "error: extraction of '${_filename}' failed")
-    endif()
-    set(SRC_DIR ${CMAKE_CURRENT_BINARY_DIR}/../${_extracted_dir})
-endif()
-
-if(NOT EXISTS ${SRC_DIR}/${_landmark})
-    message(FATAL_ERROR "Failed to locate python source.
-The searched locations were:
-   <CMAKE_CURRENT_SOURCE_DIR>
-   <CMAKE_CURRENT_SOURCE_DIR>/cpython-${PY_VERSION}
-   <CMAKE_CURRENT_SOURCE_DIR>/Python-${PY_VERSION}
-   <CMAKE_CURRENT_BINARY_DIR>/../cpython-${PY_VERSION}
-   <CMAKE_CURRENT_BINARY_DIR>/../Python-${PY_VERSION}
-   <SRC_DIR>
-You could try to:
-  1) download ${_download_link}
-  2) extract the archive in folder: ${_parent_dir}
-  3) Check that file \"${_parent_dir}/${_extracted_dir}/${_landmark}\" exists.
-  4) re-configure.
-If you already downloaded the source, you could try to re-configure this project passing -DSRC_DIR:PATH=/path/to/Python-{PY_VERSION} using cmake or adding an PATH entry named SRC_DIR from cmake-gui.")
-endif()
+get_filename_component(SRC_DIR "../cpython" ABSOLUTE)
 message(STATUS "SRC_DIR: ${SRC_DIR}")
 
 # Extract version string from python source (Copied from FindPythonLibs.cmake)
